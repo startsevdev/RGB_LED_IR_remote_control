@@ -10,12 +10,18 @@ decode_results results;
 int Rled = 9; 
 int Gled = 10; 
 int Bled = 11;
+int mode = 0;
 int lastMode = 0;
 
 void off() {
   analogWrite(Rled, 0); 
   analogWrite(Gled, 0); 
   analogWrite(Bled, 0);
+}
+void white() {
+  analogWrite(Rled, 255); 
+  analogWrite(Gled, 255); 
+  analogWrite(Bled, 255);
 }
 void red() {
   analogWrite(Rled, 255); 
@@ -69,6 +75,8 @@ void takeMode(int mode) {
 
   else if (mode == 6)
   magneta();
+  else if (mode == 7)
+  white();
 }
 
 void setup() {
@@ -77,6 +85,7 @@ void setup() {
  pinMode(Rled, OUTPUT);
 
 randomSeed(analogRead(1));
+
 lastMode = random(1, 7);
 
  irrecv.enableIRIn(); // Start the receiver
@@ -88,9 +97,12 @@ lastMode = random(1, 7);
 void loop() {
   if (irrecv.decode(&results)) {
     Serial.println(results.value, HEX);
+    Serial.println(mode);
+    Serial.println(lastMode);
+    Serial.println();
     
-     //CH
-    if (results.value == 0xFF629D && mode !=0) {
+    //CH
+    if (results.value == 0xFF629D && mode != 0) {
       lastMode = mode;
       mode = 0;
     }
@@ -98,23 +110,28 @@ void loop() {
       mode = lastMode;
     }
     //CH-
-    else if (results.value == 0xFFA25D && mode > 1) {
+    else if (results.value == 0xFFA25D && mode > 1 && mode < 7) {
       mode -= 1;
     }
     else if (results.value == 0xFFA25D && mode == 1) {
       mode = 6;
     }
+    else if (results.value == 0xFFA25D && mode == 7) {
+      mode = random(1, 7);
+    }
     //CH+
-    else if (results.value == 0xFFE21D && (mode < 6)) {
+    else if (results.value == 0xFFE21D && 0 < mode && mode < 6) {
       mode += 1;
     }
     else if (results.value == 0xFFE21D && mode == 6) {
       mode = 1;
     }
+    else if (results.value == 0xFFE21D && mode == 7) {
+      mode = random(1, 7);
+    }
     //0
-    if (results.value == 0xFF6897 && mode !=0) {
-      lastMode = mode;
-      mode = 0;
+    if (results.value == 0xFF6897) {
+      mode = 7;
     }
     else if (results.value == 0xFF6897 && mode == 0) {
       mode = lastMode;
